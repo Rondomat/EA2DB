@@ -1,20 +1,13 @@
-﻿using System.Data;
-/*
- * Created by SharpDevelop.
- * User: Ron
- * Date: 07.08.2012
- * Time: 20:49
- *
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-
-namespace EA2DB
+﻿namespace EA2DB
 {
 	using System;
 	using System.Data;
 	using System.Data.OleDb;
 	using System.Linq;
-	using System.Collections.Generic;
+
+	/// <summary>
+	/// Main program.
+	/// </summary>
 	class Program
 	{
 		public static void Main(string[] args)
@@ -27,26 +20,17 @@ namespace EA2DB
 				{
 					connection.Open();
 
-					List<string> opNames = new List<string>();
+					DataSet dataSet = connection.OperationsOfClass().OnObjectID(11748).QueryDataSet();
+					DumpDataSet(dataSet);
+					ProjectDataSet(dataSet);
 
-					opNames.Add("Version");
-					opNames.Add("main");
-					opNames.Add("main");
-					opNames.Add("ma");
+					dataSet = connection.OperationsOfClass().OnName("intercpu").QueryDataSet();
+					DumpDataSet(dataSet);
+					ProjectDataSet(dataSet);
 
-					DataSet dataSet = opNames.OperationsOfClassLike(true, connection);
-					//DataSet dataSet = "un".OperationsOfClassLike(true, connection);
-					DumpDS(dataSet);
-
-					var names = dataSet.Tables[0].AsEnumerable().Select(x => new { X = x.Field<string>(1), Y = x.Field<string>(3) });
-					names.ToList().ForEach(x =>
-					{ 
-						Console.WriteLine("Class: {0}", x.X);
-						Console.WriteLine("Operation: {0}", x.Y);
-					});
-
-
-
+					dataSet = connection.OperationsOfClass().OnNameLike("tes").QueryDataSet();
+					DumpDataSet(dataSet);
+					ProjectDataSet(dataSet);
 				}
 			}
 			catch(System.Exception ex)
@@ -57,6 +41,16 @@ namespace EA2DB
 			//Console.ReadKey(true);
 		}
 
+		public static void ProjectDataSet(DataSet dataSet)
+		{
+			var names = dataSet.Tables[0].AsEnumerable().Select(x => new { X = x.Field<string>(1), Y = x.Field<string>(3) });
+			names.ToList().ForEach(x =>
+			{
+				Console.WriteLine("Operation: {0}", x.X);
+				Console.WriteLine("Class: {0}", x.Y);
+			});
+		}
+
 		private static void Dump(OleDbCommand command)
 		{
 			OleDbDataReader reader = command.ExecuteReader();
@@ -65,23 +59,24 @@ namespace EA2DB
 				for(int fieldCount = 0; fieldCount < reader.FieldCount; fieldCount++)
 				{
 					Console.WriteLine(string.Format("[{0}] {1} ({2}):{3}",
-													fieldCount,
-													reader.GetName(fieldCount),
-													reader.GetDataTypeName(fieldCount),
-													reader[fieldCount].ToString()));
+					                                fieldCount,
+					                                reader.GetName(fieldCount),
+					                                reader.GetDataTypeName(fieldCount),
+					                                reader[fieldCount].ToString()));
 				}
 			}
 			reader.Close();
 		}
-		private static void DumpDS(OleDbCommand command)
+
+		private static void DumpDataSet(OleDbCommand command)
 		{
 			DataSet dataSet = new DataSet();
 			OleDbDataAdapter adapter = new OleDbDataAdapter(command);
 			adapter.Fill(dataSet);
-			DumpDS(dataSet);
+			DumpDataSet(dataSet);
 		}
 
-		private static void DumpDS(DataSet dataSet)
+		private static void DumpDataSet(DataSet dataSet)
 		{
 			foreach(DataTable table in dataSet.Tables)
 			{
