@@ -1,5 +1,6 @@
 ﻿namespace EA2DB
 {
+	using System.Collections.Generic;
 	using System.Data.OleDb;
 
 	/// <summary>
@@ -7,22 +8,15 @@
 	/// </summary>
 	public class EAQuery
 	{
-		public OleDbConnection Connection { get; set; }
-		public string Select { get; set; }
-		public string Where { get; set; }
-		public string Query
+		public EAQuery()
 		{
-			get
-			{
-				if(string.IsNullOrEmpty(Where))
-				{
-					return Select;
-				}
-				else
-				{
-					return string.Format("{0} {1}", Select, Where);
-				}
-			}
+			Where = new List<string>();
+		}
+
+		public OleDbConnection Connection
+		{
+			get;
+			set;
 		}
 
 		public bool IsValid
@@ -31,6 +25,33 @@
 			{
 				return (Connection != null) && !string.IsNullOrEmpty(Query);
 			}
+		}
+
+		public string Query
+		{
+			get
+			{
+				if(Where.Count == 0)
+				{
+					return Select;
+				}
+				else
+				{
+					return string.Format("SELECT {0} WHERE {1}", Select, string.Join(" ", Where));
+				}
+			}
+		}
+
+		public string Select
+		{
+			get;
+			set;
+		}
+
+		public List<string> Where
+		{
+			get;
+			set;
 		}
 
 		public override string ToString()

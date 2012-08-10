@@ -4,6 +4,7 @@
 	using System.Data;
 	using System.Data.OleDb;
 	using System.Linq;
+	using System.Collections.Generic;
 
 	/// <summary>
 	/// Main program.
@@ -19,18 +20,17 @@
 				using(OleDbConnection connection = new OleDbConnection(connectionString))
 				{
 					connection.Open();
-
-					DataSet dataSet = connection.OperationsOfClass().OnObjectID(11748).QueryDataSet();
+					DataSet dataSet;
+					dataSet = connection.OperationsOfClass().OnObjectID(11748).Or().OnName("intercpu").QueryDataSet();
 					DumpDataSet(dataSet);
 					ProjectDataSet(dataSet);
 
-					dataSet = connection.OperationsOfClass().OnName("intercpu").QueryDataSet();
+					dataSet = connection.OperationsOfClass().OnName("intercpu").Or().OnName("mc_fahrt").QueryDataSet();
 					DumpDataSet(dataSet);
 					ProjectDataSet(dataSet);
 
-					dataSet = connection.OperationsOfClass().OnNameLike("tes").QueryDataSet();
-					DumpDataSet(dataSet);
-					ProjectDataSet(dataSet);
+					var iDs = connection.Diagrams().OnEqualsGeneric("t_diagram.ShowDetails", 0).QueryDataSet().IDs();
+					DumpIDs(iDs);
 				}
 			}
 			catch(System.Exception ex)
@@ -100,6 +100,11 @@
 				}
 				Console.WriteLine("+++++++++");
 			}
+		}
+
+		public static void DumpIDs(IEnumerable<int> iDs)
+		{
+			iDs.ToList().ForEach(x => { Console.WriteLine(x); });
 		}
 	}
 }
