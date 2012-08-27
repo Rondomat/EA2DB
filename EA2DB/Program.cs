@@ -21,16 +21,25 @@
 				{
 					connection.Open();
 					DataSet dataSet;
-					dataSet = connection.OperationsOfClass().OnObjectID(11748).Or().OnName("intercpu").QueryDataSet();
+					dataSet = connection.OperationsOfClass().OnObjectID(11748).Or().OnObjectName("intercpu").QueryDataSet();
 					DumpDataSet(dataSet);
 					ProjectDataSet(dataSet);
 
-					dataSet = connection.OperationsOfClass().OnName("intercpu").Or().OnName("mc_fahrt").QueryDataSet();
+					dataSet = connection.OperationsOfClass().OnObjectName("intercpu").Or().OnObjectName("mc_fahrt").QueryDataSet();
 					DumpDataSet(dataSet);
 					ProjectDataSet(dataSet);
 
 					var iDs = connection.Diagrams().OnEqualsGeneric("t_diagram.ShowDetails", 0).QueryDataSet().IDs();
 					DumpIDs(iDs);
+
+					dataSet = connection.Packages().OnPackageName("intercpu").QueryDataSet();
+					DumpDataSet(dataSet);
+
+					//string packagePath = "MC_860.Moduldesign MC.Frameworks";
+					string packagePath = "MC_860/Moduldesign MC/Frameworks";
+					int packageId = connection.PackageIdByPath(packagePath, "/");
+					Console.WriteLine("{0}:{1}", packagePath, packageId);
+
 				}
 			}
 			catch(System.Exception ex)

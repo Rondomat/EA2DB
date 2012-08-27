@@ -33,7 +33,7 @@
 			{
 				if(Where.Count == 0)
 				{
-					return Select;
+					return string.Format("SELECT {0}", Select);
 				}
 				else
 				{
