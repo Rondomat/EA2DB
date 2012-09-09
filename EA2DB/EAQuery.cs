@@ -1,7 +1,7 @@
 ﻿namespace EA2DB
 {
 	using System.Collections.Generic;
-	using System.Data.OleDb;
+	using System.Data.Common;
 
 	/// <summary>
 	/// Query Object passed through the EAElementExtensions extension methods
@@ -13,7 +13,7 @@
 			Where = new List<string>();
 		}
 
-		public OleDbConnection Connection
+		public DbConnection Connection
 		{
 			get;
 			set;

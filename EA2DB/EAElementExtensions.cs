@@ -2,7 +2,9 @@
 {
 	using System.Collections.Generic;
 	using System.Data;
+	using System.Data.Common;
 	using System.Data.OleDb;
+	using System.Data.SqlClient;
 	using System.Linq;
 
 	/// <summary>
@@ -40,8 +42,7 @@ FROM (t_operation INNER JOIN t_object ON t_operation.Object_ID = t_object.Object
 
 		#endregion ### constants ###
 
-
-		#endregion ### private members ###
+		#region ### private methods ###
 
 		private static void MakeFirstColumnPrimaryKey(DataTable table)
 		{
@@ -53,61 +54,18 @@ FROM (t_operation INNER JOIN t_object ON t_operation.Object_ID = t_object.Object
 			}
 		}
 
-		#region ### Extension Methods ###
-
-		#region OleDbConnection extensions
-
-		public static EAQuery OperationsOfClass(this OleDbConnection connection)
-		{
-			EAQuery query = new EAQuery();
-			query.Connection = connection;
-			query.Select = SELECT_INNER_JOIN_OPERATIONS_OF_OBJECT;
-
-			return query;
-		}
-
-		public static EAQuery Diagrams(this OleDbConnection connection)
-		{
-			EAQuery query = new EAQuery();
-			query.Connection = connection;
-			query.Select = SELECT_DIAGRAMS;
-
-			return query;
-		}
-
-		public static EAQuery Packages(this OleDbConnection connection)
-		{
-			EAQuery query = new EAQuery();
-			query.Connection = connection;
-			query.Select = SELECT_PACKAGES;
-
-			return query;
-		}
-
-		public static int PackageIdByPath(this OleDbConnection connection, string packagePath, string separator = ".")
-		{
-			var packagePathEnumerable = packagePath.Split(new string[] { separator }, System.StringSplitOptions.None);
-			return PackageIdByPath(connection, packagePathEnumerable);
-		}
-
-		public static int PackageIdByPath(this OleDbConnection connection, IEnumerable<string> packagePath)
-		{
-			return PackageIdByPathRecursive(connection, packagePath, 0);
-		}
-
-		private static int PackageIdByPathRecursive(OleDbConnection connection, IEnumerable<string> packagePath, int parentId)
+		private static int PackageIdByPathRecursive(DbConnection connection, IEnumerable<string> packagePath, int parentId)
 		{
 			int packageId = 0;
 			var firstPackageSegment = packagePath.FirstOrDefault();
-
 
 			EAQuery query = new EAQuery();
 			query.Connection = connection;
 			query.Select = SELECT_PACKAGES;
 			DataSet dataSet = query.OnPackageName(firstPackageSegment)
-				.And()
-	.OnEqualsGeneric("t_package.Parent_ID", parentId)
-	.QueryDataSet();
+			                  .And()
+			                  .OnEqualsGeneric("t_package.Parent_ID", parentId)
+			                  .QueryDataSet();
 			if(packagePath.Count() == 1)
 			{
 				if(dataSet.Tables[0].Rows.Count > 0)
@@ -132,6 +90,73 @@ FROM (t_operation INNER JOIN t_object ON t_operation.Object_ID = t_object.Object
 				}
 			}
 			return packageId;
+		}
+
+		private static DbDataAdapter GetDbDataAdapter(EAQuery query)
+		{
+			DbDataAdapter adapter = null;
+			if(query.Connection.GetType() == typeof(OleDbConnection))
+			{
+				OleDbCommand command = new OleDbCommand(query.Query, query.Connection as OleDbConnection);
+				adapter = new OleDbDataAdapter(command);
+			}
+			else
+			{
+				if(query.Connection.GetType() == typeof(SqlConnection))
+				{
+					SqlCommand command = new SqlCommand(query.Query, query.Connection as SqlConnection);
+					adapter = new SqlDataAdapter(command);
+				}
+			}
+
+			return adapter;
+		}
+
+		#endregion ### private methods ###
+
+		#endregion ### private members ###
+
+
+		#region ### Extension Methods ###
+
+		#region OleDbConnection extensions
+
+		public static EAQuery OperationsOfClass(this DbConnection connection)
+		{
+			EAQuery query = new EAQuery();
+			query.Connection = connection;
+			query.Select = SELECT_INNER_JOIN_OPERATIONS_OF_OBJECT;
+
+			return query;
+		}
+
+		public static EAQuery Diagrams(this DbConnection connection)
+		{
+			EAQuery query = new EAQuery();
+			query.Connection = connection;
+			query.Select = SELECT_DIAGRAMS;
+
+			return query;
+		}
+
+		public static EAQuery Packages(this DbConnection connection)
+		{
+			EAQuery query = new EAQuery();
+			query.Connection = connection;
+			query.Select = SELECT_PACKAGES;
+
+			return query;
+		}
+
+		public static int PackageIdByPath(this DbConnection connection, string packagePath, string separator = ".")
+		{
+			var packagePathEnumerable = packagePath.Split(new string[] { separator }, System.StringSplitOptions.None);
+			return PackageIdByPath(connection, packagePathEnumerable);
+		}
+
+		public static int PackageIdByPath(this DbConnection connection, IEnumerable<string> packagePath)
+		{
+			return PackageIdByPathRecursive(connection, packagePath, 0);
 		}
 
 		#endregion OleDbConnection extensions
@@ -223,11 +248,16 @@ FROM (t_operation INNER JOIN t_object ON t_operation.Object_ID = t_object.Object
 		{
 			if(query.IsValid)
 			{
+				// get DbDataAdapter by DbConnection type
+				DbDataAdapter adapter = GetDbDataAdapter(query);
+
+				// fill dataset
 				DataSet dataSet = new DataSet();
-				OleDbCommand command = new OleDbCommand(query.Query, query.Connection);
-				OleDbDataAdapter a = new OleDbDataAdapter(command);
-				a.Fill(dataSet);
-				MakeFirstColumnPrimaryKey(dataSet.Tables[0]);
+				if(adapter != null)
+				{
+					adapter.Fill(dataSet);
+					MakeFirstColumnPrimaryKey(dataSet.Tables[0]);
+				}
 				return dataSet;
 			}
 			return new DataSet();

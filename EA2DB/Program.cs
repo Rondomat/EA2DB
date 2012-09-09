@@ -16,7 +16,7 @@
 			try
 			{
 
-				string connectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=c:\temp\test.EAP";
+				string connectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=d:\temp\test.EAP";
 				using(OleDbConnection connection = new OleDbConnection(connectionString))
 				{
 					connection.Open();
@@ -35,9 +35,9 @@
 					dataSet = connection.Packages().OnPackageName("intercpu").QueryDataSet();
 					DumpDataSet(dataSet);
 
-					//string packagePath = "MC_860.Moduldesign MC.Frameworks";
-					string packagePath = "MC_860/Moduldesign MC/Frameworks";
-					int packageId = connection.PackageIdByPath(packagePath, "/");
+					string packagePath = "MyModel.Class Model.Sub1.Sub2.Sub3";
+					//string packagePath = "MC_860/Moduldesign MC/Frameworks";
+					int packageId = connection.PackageIdByPath(packagePath);
 					Console.WriteLine("{0}:{1}", packagePath, packageId);
 
 				}
